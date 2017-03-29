@@ -47,38 +47,36 @@ def fourmiam(G):
     visited = []
     blackListed = []
     nodes = G.nodes()
-    depart = currentNode = nodes[G.nodes().index("REZE six")]
+    depart = currentEdge = nodes[G.nodes().index("REZE six")]
     arrive = nodes[G.nodes().index("REZE deux")]
     print("depart:", depart)
     print("arrive:", arrive)
-    visited.append(currentNode)
-
-    findNeighbors(G, currentNode)
+    visited.append(currentEdge)
 
     #Tant que la fourmi n'est pas arrivée on exécute
-    # while(currentNode != arrive):
-    #     print("currentNode:", currentNode)
-    #     #On check les rues voisines (G.neighbors), et on stock dans la variable rues
-    #     neighbors = findNeighbors(G, currentNode)
-    #     #On fait un choix pondéré entre les rues voisines (en fonction des phéromones + en random)
-    #     nextNode = choiceNeighbors(neighbors,visited,blackListed,G)
-    #     # print(nextNode)
-    #
-    #     if nextNode == -1:
-    #         #Tant que la fourmie est bloquée (impasse ou chemin déjà visité)
-    #         while(len(visited) > 1 and len(G.neighbors(currentNode)) < 1):
-    #             #On ajoute la rue bloqué dans un tableau rues_invalides
-    #             blackListed.append(visited[len(visited) -1])
-    #             visited.pop()
-    #             #On fait marche arrière
-    #             currentNode = visited[len(visited) -1]
-    #             #Si retour au point d'origine et que l'on a pas d'autre chemin utilisables on s'arrête
-    #             if depart == currentNode:
-    #                 return -1
-    #     else:
-    #         #Créer un historique par fourmies des trajets empruntés
-    #         visited.append(nextNode)
-    #         currentNode = nextNode
+    while(currentEdge != arrive):
+        print("currentEdge:", currentEdge)
+        #On check les rues voisines (G.neighbors), et on stock dans la variable rues
+        neighbors = findNeighbors(G, currentEdge)
+        #On fait un choix pondéré entre les rues voisines (en fonction des phéromones + en random)
+        nextNode = choiceNeighbors(neighbors,visited,blackListed,G)
+        # print(nextNode)
+
+        if nextNode == -1:
+            #Tant que la fourmie est bloquée (impasse ou chemin déjà visité)
+            while(len(visited) > 1 and len(G.neighbors(currentEdge)) < 1):
+                #On ajoute la rue bloqué dans un tableau rues_invalides
+                blackListed.append(visited[len(visited) -1])
+                visited.pop()
+                #On fait marche arrière
+                currentEdge = visited[len(visited) -1]
+                #Si retour au point d'origine et que l'on a pas d'autre chemin utilisables on s'arrête
+                if depart == currentEdge:
+                    return -1
+        else:
+            #Créer un historique par fourmies des trajets empruntés
+            visited.append(nextNode)
+            currentEdge = nextNode
 
     print("Fini")
 
@@ -92,20 +90,36 @@ def choiceNeighbors(neighbors,visited,blackListed,G):
                     node = G.nodes()[G.nodes().index(street['name'])]
                     if node not in visited and node not in blackListed:
                         choices.append(node)
-    print(choices)
     if len(choices) >= 1:
-        return choices[randint(0,len(choices)-1)]
+        choice = choices[randint(0,len(choices)-1)]
+        print("choice:", choice)
+        return choice
     else:
         return -1
 
-def findNeighbors(G, currentNode):
-    print("currentNode:", currentNode)
-    neighbors = []
-    edges = G.edges(currentNode, data=True)
-    print(G.node)
+# renvoie tous les edges possible à partir du
+def findNeighbors(G, currentEdge):
+    edges = G.edges(currentEdge, data=True)
+    for edge in G.edges(data=True):
+        if edge[2]['name'] == str(currentEdge):
+            edges.append(edge)
+    sortEdge(edges, currentEdge)
+    return edges
+
+#Standardise les edges
+def sortEdge(edges, currentEdge):
     for edge in edges:
-        print("-neighbor:",edge[2]['name'])
-    return neighbors
+        edge = list(edge)
+        if(edge[2]['name'] == str(currentEdge)):
+            tmp = edge[2]['name']
+            if(type(edge[0]) is str):
+                edge[2]['name'] = edge[0]
+                edge[0] = tmp
+            elif(type(edge[1]) is str):
+                edge[2]['name'] = edge[1]
+                edge[1] = tmp
+            edge = tuple(edge)
+    return edges
 
 def main():
     G = creationGraph()
