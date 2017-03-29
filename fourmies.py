@@ -35,8 +35,8 @@ def creationGraph():
             else:
                 G.add_edge(row['TENANT'], row['ABOUTISSANT'], weight=weight)
 
-        #nx.draw_circular(G)
-        #plt.show()
+        # nx.draw_circular(G)
+        # plt.show()
 
         return G
 
@@ -44,45 +44,46 @@ def fourmiam(G):
     visited = []
     blackListed = []
     nodes = G.nodes()
-    depart = currentNodes = nodes[G.nodes().index("REZE six")]
+    depart = currentNode = nodes[G.nodes().index("REZE six")]
     arrive = nodes[G.nodes().index("REZE deux")]
-    print("depart", depart)
-    print("arrive", arrive)
-    visited.append(currentNodes)
+    print("depart:", depart)
+    print("arrive:", arrive)
+    visited.append(currentNode)
     #Tant que la fourmi n'est pas arrivée on exécute
-    while(currentNodes != arrive):
+    while(currentNode != arrive):
         #On check les rues voisines (G.neighbors), et on stock dans la variable rues
-        neighbors = G.edges(currentNodes)
-        # print("current ",currentNodes)
-        # print("neighbo ",neighbors)
+        neighbors = G.edges(currentNode, data=True)
+        # print("currentNode:", currentNode)
+        # print("neighbors:",neighbors)
         #On fait un choix pondéré entre les rues voisines (en fonction des phéromones + en random)
         nextNode = choiceNeighbors(neighbors,visited,blackListed)
-        print(nextNode)
+        # print(nextNode)
 
         if nextNode == -1:
             #Tant que la fourmie est bloquée (impasse ou chemin déjà visité)
-            while(len(visited) > 1 and len(G.neighbors(currentNodes)) < 1):
+            while(len(visited) > 1 and len(G.neighbors(currentNode)) < 1):
                 #On ajoute la rue bloqué dans un tableau rues_invalides
                 blackListed.append(visited[len(visited) -1])
                 visited.pop()
                 #On fait marche arrière
-                currentNodes = visited[len(visited) -1]
+                currentNode = visited[len(visited) -1]
                 #Si retour au point d'origine et que l'on a pas d'autre chemin utilisables on s'arrête
-                if depart == currentNodes:
+                if depart == currentNode:
                     return -1
         else:
             #Créer un historique par fourmies des trajets empruntés
             visited.append(nextNode)
-            currentNodes = nextNode
+            currentNode = nextNode
 
     print("Fini")
 
 # fait le choix du prochain noeud
 def choiceNeighbors(neighbors,visited,blackListed):
-    print("neighbors: ",neighbors)
-    for node in neighbors:
-        if node not in visited and node not in blackListed:
-            return node
+    print(len(neighbors))
+    print(neighbors)
+    for i in range(len(neighbors)):
+        if neighbors[i] not in visited and neighbors[i] not in blackListed:
+            return neighbors[i]
     return -1
 
 def main():
