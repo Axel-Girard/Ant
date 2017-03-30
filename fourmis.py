@@ -60,7 +60,6 @@ def fourmiam(G):
         neighbors = findNeighbors(G, currentEdge)
         #On fait un choix pondéré entre les rues voisines (en fonction des phéromones + en random)
         nextNode = choiceNeighbors(neighbors,visited,blackListed,G)
-        # print(nextNode)
 
         if nextNode == -1:
             #Tant que la fourmie est bloquée (impasse ou chemin déjà visité)
@@ -92,7 +91,7 @@ def choiceNeighbors(neighbors,visited,blackListed,G):
                         choices.append(node)
     if len(choices) >= 1:
         choice = choices[randint(0,len(choices)-1)]
-        print("choice:", choice)
+        # print("choice:", choice)
         return choice
     else:
         return -1
@@ -106,7 +105,7 @@ def findNeighbors(G, currentEdge):
     sortEdge(edges, currentEdge)
     return edges
 
-#Standardise les edges
+#Standardise les edges pour toujours avoir le prochain noeud possible dans les arguments
 def sortEdge(edges, currentEdge):
     for edge in edges:
         edge = list(edge)
@@ -115,17 +114,23 @@ def sortEdge(edges, currentEdge):
             if(type(edge[0]) is str):
                 edge[2]['name'] = edge[0]
                 edge[0] = tmp
+                if(type(edge[1]) is str):
+                    e = edge
+                    e[2]['name'] = e[1]
+                    e[1] = tmp
+                    edges.append(e)
             elif(type(edge[1]) is str):
                 edge[2]['name'] = edge[1]
                 edge[1] = tmp
             edge = tuple(edge)
+    for edge in edges:
+        print("-",edge)
     return edges
 
 def main():
     G = creationGraph()
     fourmiam(G)
 
-# le départ d'une fourmie est
 main()
 
     #pos=nx.spring_layout(G)
