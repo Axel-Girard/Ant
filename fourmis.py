@@ -4,6 +4,9 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from random import randint
 
+nbFourmi = 100
+nbGeneration = 100
+
 def creationGraph():
     #import du fichier csv de la ville de nantes, le délimiteur est \t
     with open('VOIES_NM_.csv') as csvfile:
@@ -48,66 +51,71 @@ def creationGraph():
         return G
 
 def fourmiam(G):
+    G = G.copy()
     visited = []
     blackListed = []
     nodes = G.nodes()
     weight = 0
-    start = currentEdge = nodes[G.nodes().index("REZE six")]
+    if "REZE six" in nodes:
+        start = currentEdge = nodes[G.nodes().index("REZE six")]
+    elif "REZE six" in G.edges():
+        start = currentEdge = G.edges("REZE six")
+    else:
+        return G
     end = nodes[G.nodes().index("REZE deux")]
     print("start:", start)
     print("end:", end)
-    print('')
     visited.append(currentEdge)
 
     #Tant que la fourmi n'est pas arrivée on exécute
     while(currentEdge != end):
-        print("currentEdge:", currentEdge)
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
         #On check les rues voisines (G.neighbors), et on stock dans la variable rues
         neighbors = findNeighbors(G, currentEdge)
         #On fait un choix pondéré entre les rues voisines (en fonction des phéromones + en random)
         nextNode = choiceNeighbors(neighbors,visited,blackListed,G,end)
 
         if nextNode == -1:
-            print('')
             #Si on n'est pas bloqué au départ
             if(currentEdge != start):
                 #On ajoute la rue bloqué dans un tableau rues invalides
                 blackListed.append(currentEdge)
-                # print("blackListed:",currentEdge)
                 #On fait marche arrière
-                visited.pop()
+                print("pop",visited.pop())
                 currentEdge = visited[len(visited)-1]
-                # print("newCurrent", currentEdge)
             else:
                 #Si on est bloqué au départ on arrête la fourmi
-                return -1
+                return G
         else:
             #Créer un historique par fourmis des trajets empruntés
             visited.append(nextNode)
             currentEdge = nextNode
-        print('')
 
-    print("Fini")
+    pheromone = 100
+    for v in visited:
+        G.edges(v, data=True)[0][2]['pheromone'] = int(pheromone/len(visited))
+
+    return G
 
 # fait le choix du prochain noeud
 def choiceNeighbors(neighbors,visited,blackListed,G,end):
     choices = []
     for edge in neighbors:
-        # print("_________",edge)
         street = edge[2]
         if(type(street) is dict and 'name' in street):
             if street['name'] in G.nodes():
-                # print(street['name'])
                 edges = G.edges(street['name'])
-                # print('edges:', edges)
                 for edge in edges:
-                    edge = edge[0]
-                    if edge not in visited and edge not in blackListed:
-                        print(edge)
-                        choices.append(edge)
+                    for e in edge:
+                        if(type(e) is str):
+                            if e not in visited and e not in blackListed and e != 'Impasse':
+                                choices.append(e)
     if len(choices) >= 1:
-        choice = choices[randint(0,len(choices)-1)]
+        newlist = []
+        # déduplication des valeurs
+        for i in choices:
+            if i not in newlist:
+                newlist.append(i)
+        choice = newlist[randint(0,len(newlist)-1)]
         return choice
     else:
         return -1
@@ -119,8 +127,6 @@ def findNeighbors(G, currentEdge):
         if edge[2]['name'] == str(currentEdge):
             edges.append(edge)
     sortEdge(edges, currentEdge)
-    # for e in edges:
-    #     print(e)
     return edges
 
 #Standardise les edges pour toujours avoir le prochain noeud possible dans les arguments
@@ -148,8 +154,24 @@ def sortEdge(edges, currentEdge):
 
 def main():
     G = creationGraph()
-    # for e in findNeighbors(G, "REZE dix"):
-    #     print(e)
-    fourmiam(G)
+    graphes = []
+    for i in range(nbGeneration):
+        print('')
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        print("       >> New generation <<")
+        print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+        print('')
+        graphes = []
+        for j in range(nbFourmi):
+            graphes.append(fourmiam(G))
+        for graphe in graphes:
+            for j in range(len(graphe.edges())):
+                G.edges(data=True)[j][2]['pheromone'] += graphe.edges(data=True)[j][2]['pheromone']
+        # on supprime une partie des phéromones pour enlever les résidues incohérent
+        for edge in G.edges(data=True):
+            print(edge[2]['pheromone'], edge[0], edge[1])
+            if edge[2]['pheromone'] > 30:
+                edge[2]['pheromone'] -= 30
+
 
 main()
